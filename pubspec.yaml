@@ -1,0 +1,30 @@
+name: fleet_tech_mobile
+description: "Fleet-tech Mobile Application for Field Technicians"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.5.1
+  dio: ^5.7.0
+  flutter_secure_storage: ^9.2.2
+  go_router: ^14.6.0
+  cached_network_image: ^3.4.1
+  intl: ^0.19.0
+  mobile_scanner: ^5.2.3
+  signature: ^5.5.0
+  shared_preferences: ^2.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
