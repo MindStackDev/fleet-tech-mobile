@@ -4,6 +4,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/vehicle/presentation/vehicle_detail_screen.dart';
 import '../../features/intervention/presentation/intervention_wizard_screen.dart';
+import '../../features/yard/presentation/shift_handover_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -28,6 +29,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/intervention',
         name: 'intervention',
         builder: (context, state) => const InterventionWizardScreen(),
+      ),
+      GoRoute(
+        path: '/yard/handover',
+        name: 'yard_handover',
+        builder: (context, state) => const ShiftHandoverScreen(),
       ),
     ],
   );

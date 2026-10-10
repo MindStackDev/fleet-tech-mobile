@@ -98,10 +98,10 @@ class VehicleDetailScreen extends StatelessWidget {
             const SizedBox(height: 24),
             // Action Buttons
             ElevatedButton.icon(
-              onPressed: () => context.push('/intervention'),
-              icon: const Icon(Icons.build_rounded, size: 20, color: Colors.white),
+              onPressed: () => context.push('/yard/handover'),
+              icon: const Icon(Icons.assignment_turned_in_rounded, size: 20, color: Colors.white),
               label: const Text(
-                'Iniciar Intervención Técnica',
+                'Iniciar Relevo de Turno y Patio',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
@@ -111,6 +111,23 @@ class VehicleDetailScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 elevation: 2,
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/intervention'),
+              icon: const Icon(Icons.build_rounded, size: 18, color: AppColors.primaryDark),
+              label: const Text(
+                'Ficha de Intervención Técnica',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+              ),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
             const SizedBox(height: 10),
