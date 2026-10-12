@@ -36,11 +36,86 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _selectDemoUser(String email, String role) {
+    setState(() {
+      _usernameController.text = email;
+      _passwordController.text = 'password123';
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Accediendo como $role...'),
+        duration: const Duration(milliseconds: 700),
+        backgroundColor: AppColors.primaryDark,
+      ),
+    );
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        context.go('/home');
+      }
+    });
+  }
+
   Future<void> _handleBiometric() async {
     final success = await ref.read(authProvider.notifier).loginBiometric();
     if (success && mounted) {
       context.go('/home');
     }
+  }
+
+  Widget _buildDemoChip({
+    required String name,
+    required String role,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 10,
+              backgroundColor: color,
+              child: Text(
+                name.isNotEmpty ? name[0] : 'U',
+                style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  role,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -307,6 +382,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  // Quick Demo Roles Section
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.bolt_rounded, size: 16, color: Color(0xFFD97706)),
+                            SizedBox(width: 6),
+                            Text(
+                              'ACCESO RÁPIDO PARA PRUEBAS (DEMO)',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildDemoChip(
+                              name: 'Carlos Mendoza',
+                              role: 'Supervisor Patio',
+                              color: const Color(0xFF0F766E),
+                              onTap: () => _selectDemoUser('supervisor@fleettech.pe', 'Carlos Mendoza (Supervisor)'),
+                            ),
+                            _buildDemoChip(
+                              name: 'Roberto Sánchez',
+                              role: 'Técnico OT',
+                              color: AppColors.primaryDark,
+                              onTap: () => _selectDemoUser('roberto.sanchez@gltracker.com', 'Roberto Sánchez (Técnico)'),
+                            ),
+                            _buildDemoChip(
+                              name: 'Juan Quispe',
+                              role: 'Chofer / Operador',
+                              color: const Color(0xFFD97706),
+                              onTap: () => _selectDemoUser('juan.quispe@gltracker.com', 'Juan Quispe (Chofer)'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   // Footer Help Text
                   Wrap(
                     alignment: WrapAlignment.center,
