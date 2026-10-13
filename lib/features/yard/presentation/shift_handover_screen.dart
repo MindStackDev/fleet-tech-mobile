@@ -6,6 +6,7 @@ import '../domain/tool_item.dart';
 import '../domain/shift_handover_data.dart';
 import 'widgets/dual_signature_pad.dart';
 import 'widgets/tool_audit_card.dart';
+import 'widgets/handover_receipt_dialog.dart';
 
 class ShiftHandoverScreen extends StatefulWidget {
   final String plateNumber;
@@ -213,7 +214,22 @@ class _ShiftHandoverScreenState extends State<ShiftHandoverScreen> {
                   behavior: SnackBarBehavior.floating,
                 ),
               );
-              context.go('/home');
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => HandoverReceiptDialog(
+                  orderCode: 'REL-2026-1027',
+                  plateNumber: widget.plateNumber,
+                  vehicleModel: 'Toyota Hilux 4x4 (2023)',
+                  odometer: _odometerController.text,
+                  fuelLevel: _selectedFuel,
+                  bayNumber: _bayController.text,
+                  outgoingOperator: _outgoingOpController.text,
+                  incomingOperator: _incomingOpController.text,
+                  verificationHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+                  hasDefects: hasCritical,
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: hasCritical ? AppColors.error : AppColors.primaryDark,
