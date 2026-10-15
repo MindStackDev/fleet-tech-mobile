@@ -38,60 +38,6 @@ class _InterventionWizardScreenState extends State<InterventionWizardScreen> {
     });
   }
 
-  void _showCompletionDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 26),
-            SizedBox(width: 10),
-            Text('Registro de Evidencias', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Paso 2 completado satisfactoriamente.'),
-            SizedBox(height: 8),
-            Text(
-              'Evidencias fotográficas requeridas:',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-            ),
-            SizedBox(height: 6),
-            Text('• Foto 1: Ubicación oculta del equipo'),
-            Text('• Foto 2: Conexión de alimentación y fusible'),
-            Text('• Foto 3: Tablero encendido sin testigos de error'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cerrar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Intervención guardada en cola de sincronización offline/online.'),
-                  backgroundColor: AppColors.successText,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-              context.go('/home');
-            },
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(120, 42),
-            ),
-            child: const Text('Completar OT'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -617,7 +563,7 @@ class _InterventionWizardScreenState extends State<InterventionWizardScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ElevatedButton(
-          onPressed: _showCompletionDialog,
+          onPressed: () => context.push('/intervention/evidence'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryDark,
             padding: const EdgeInsets.symmetric(vertical: 14),
