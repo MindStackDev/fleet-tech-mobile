@@ -115,6 +115,23 @@ class VehicleDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(
+              onPressed: () => context.push('/inspection/pre_use'),
+              icon: const Icon(Icons.checklist_rounded, size: 18, color: Color(0xFFD97706)),
+              label: const Text(
+                'Inspección Pre-Uso de Seguridad',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFFD97706)),
+              ),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: Color(0xFFD97706), width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
               onPressed: () => context.push('/intervention'),
               icon: const Icon(Icons.build_rounded, size: 18, color: AppColors.primaryDark),
               label: const Text(
