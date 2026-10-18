@@ -1,3 +1,5 @@
+import 'package:fleet_tech_mobile/features/inspection/presentation/pre_use_inspection_screen.dart';
+import 'package:fleet_tech_mobile/features/intervention/presentation/intervention_evidence_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fleet_tech_mobile/main.dart';
@@ -99,5 +101,39 @@ void main() {
     expect(find.text('Firma de Entrega'), findsOneWidget);
     expect(find.text('Firma de Recepción y Conformidad'), findsOneWidget);
     expect(find.text('Registrar Relevo y Custodia'), findsOneWidget);
+  });
+
+  testWidgets('PreUseInspectionScreen renders daily safety checklist items and state buttons', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: PreUseInspectionScreen(plateNumber: 'ABC-123'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inspección Pre-Uso de Seguridad'), findsOneWidget);
+    expect(find.text('Checklist Diario • ABC-123'), findsOneWidget);
+    expect(find.text('2. Frenos y Dirección'), findsOneWidget);
+    expect(find.text('Registrar Inspección Conforme'), findsOneWidget);
+  });
+
+  testWidgets('InterventionEvidenceScreen renders step 3 photo slots and seals', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: InterventionEvidenceScreen(orderCode: 'OT-2024-8931', plateNumber: 'ABC-123'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Registro de Intervención'), findsOneWidget);
+    expect(find.text('Orden OT-2024-8931'), findsOneWidget);
+    expect(find.text('Paso 3 de 3: Evidencias y Conformidad'), findsOneWidget);
+    expect(find.text('EVIDENCIAS FOTOGRÁFICAS'), findsOneWidget);
+    expect(find.text('Precinto de Seguridad GPS'), findsWidgets);
+    expect(find.text('Finalizar y Registrar Intervención'), findsOneWidget);
   });
 }
