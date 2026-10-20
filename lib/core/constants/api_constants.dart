@@ -26,6 +26,9 @@ class ApiConstants {
   // Core endpoints
   static const String workOrders = '/work-orders';
   static const String vehicles = '/vehicles';
+  static const String checklistTemplates = '/checklist-templates';
+  static const String inspections = '/inspections';
+  static const String defects = '/defects';
   static const String devices = '/devices';
   static const String interventions = '/interventions';
   static const String sync = '/sync';
