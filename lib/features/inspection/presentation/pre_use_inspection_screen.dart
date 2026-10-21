@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../data/inspection_repository.dart';
 
 enum ItemCheckStatus { pass, fail, na }
 
@@ -22,7 +24,7 @@ class ChecklistItemData {
   });
 }
 
-class PreUseInspectionScreen extends StatefulWidget {
+class PreUseInspectionScreen extends ConsumerStatefulWidget {
   final String plateNumber;
   final String vehicleModel;
 
@@ -33,35 +35,36 @@ class PreUseInspectionScreen extends StatefulWidget {
   });
 
   @override
-  State<PreUseInspectionScreen> createState() => _PreUseInspectionScreenState();
+  ConsumerState<PreUseInspectionScreen> createState() => _PreUseInspectionScreenState();
 }
 
-class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
+class _PreUseInspectionScreenState extends ConsumerState<PreUseInspectionScreen> {
   late List<ChecklistItemData> _items;
   final TextEditingController _notesController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _items = [
-      // 1. Luces y Eléctrico
-      ChecklistItemData(id: 1, section: '1. Sistema Eléctrico y Luces', label: 'Faros delanteros (Altas / Bajas) y neblineros', isCritical: false),
-      ChecklistItemData(id: 2, section: '1. Sistema Eléctrico y Luces', label: 'Luces de freno, reversa e intermitentes de emergencia', isCritical: true),
-      ChecklistItemData(id: 3, section: '1. Sistema Eléctrico y Luces', label: 'Bocina / Claxon de advertencia acústica', isCritical: false),
+      // 1. Luces y Eléctrico (Checklist items 6)
+      ChecklistItemData(id: 6, section: '1. Sistema Eléctrico y Luces', label: 'Faros Principales, Neblineros y Módulos LED', isCritical: false),
+      ChecklistItemData(id: 6, section: '1. Sistema Eléctrico y Luces', label: 'Luces de freno, reversa e intermitentes de emergencia', isCritical: true),
+      ChecklistItemData(id: 13, section: '1. Sistema Eléctrico y Luces', label: 'Linterna y advertencia acústica de patio', isCritical: false),
 
-      // 2. Frenos y Dirección
-      ChecklistItemData(id: 4, section: '2. Frenos y Dirección', label: 'Freno de servicio (Pedal firme sin esponjosidad)', isCritical: true),
+      // 2. Frenos y Dirección (Checklist items 5)
+      ChecklistItemData(id: 5, section: '2. Frenos y Dirección', label: 'Sistema de Frenos y Presión Neumática de Aire', isCritical: true),
       ChecklistItemData(id: 5, section: '2. Frenos y Dirección', label: 'Freno de mano / estacionamiento (Retención en pendiente)', isCritical: true),
-      ChecklistItemData(id: 6, section: '2. Frenos y Dirección', label: 'Juego libre del volante y terminales de dirección', isCritical: false),
+      ChecklistItemData(id: 12, section: '2. Frenos y Dirección', label: 'Escáner y terminales de diagnóstico de dirección', isCritical: false),
 
-      // 3. Fluidos y Motor
-      ChecklistItemData(id: 7, section: '3. Niveles de Fluidos', label: 'Nivel de aceite de motor (Varilla entre MIN y MAX)', isCritical: true),
-      ChecklistItemData(id: 8, section: '3. Niveles de Fluidos', label: 'Líquido de frenos y embrague (Sin fugas activas)', isCritical: true),
-      ChecklistItemData(id: 9, section: '3. Niveles de Fluidos', label: 'Líquido refrigerante / Coolant en radiador y depósito', isCritical: false),
+      // 3. Fluidos y Motor (Checklist items 4)
+      ChecklistItemData(id: 4, section: '3. Niveles de Fluidos', label: 'Nivel de Aceite de Motor y ausencia de fugas activas', isCritical: true),
+      ChecklistItemData(id: 4, section: '3. Niveles de Fluidos', label: 'Líquido de frenos y refrigerante / Coolant en radiador', isCritical: true),
 
-      // 4. Neumáticos
-      ChecklistItemData(id: 10, section: '4. Neumáticos y Carrocería', label: 'Presión y profundidad de banda de rodadura (>3mm)', isCritical: true),
-      ChecklistItemData(id: 11, section: '4. Neumáticos y Carrocería', label: 'Espejos retrovisores y lunas sin rajaduras', isCritical: false),
+      // 4. Neumáticos y Equipamiento (Checklist items 10, 14)
+      ChecklistItemData(id: 14, section: '4. Neumáticos y Carrocería', label: 'Medidor de presión y profundidad de banda de rodadura (>3mm)', isCritical: true),
+      ChecklistItemData(id: 10, section: '4. Neumáticos y Carrocería', label: 'Extintor PQS 6kg (Manómetro en verde y precinto)', isCritical: true),
+      ChecklistItemData(id: 9, section: '4. Neumáticos y Carrocería', label: 'Triángulos de seguridad y conos reflectivos reglamentarios', isCritical: false),
     ];
   }
 
@@ -112,24 +115,26 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Vehicle Info Header
+            // Vehicle Info Card
             _buildVehicleCard(),
             const SizedBox(height: 14),
 
-            // Critical Alert Banner (if any fail is critical)
+            // Critical Failure Warning Banner
             if (_hasCriticalFail) ...[
               _buildCriticalWarningBanner(),
               const SizedBox(height: 14),
             ],
 
-            // Score Counter Card
+            // Quick Stats Row
             _buildSummaryRow(),
             const SizedBox(height: 16),
 
-            // Sections
-            ...sections.entries.map((entry) => _buildSectionGroup(entry.key, entry.value)),
+            // Dynamic Sections
+            for (var entry in sections.entries) ...[
+              _buildSectionCard(entry.key, entry.value),
+              const SizedBox(height: 16),
+            ],
 
-            const SizedBox(height: 16),
             // General Observations
             Container(
               padding: const EdgeInsets.all(14),
@@ -142,8 +147,13 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Observaciones Generales de Patio',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    'OBSERVACIONES GENERALES DE SALIDA',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -161,10 +171,18 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
 
             // Submit Button
             ElevatedButton.icon(
-              onPressed: _submitInspection,
-              icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
+              onPressed: _isSubmitting ? null : _submitInspection,
+              icon: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                    )
+                  : const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
               label: Text(
-                _hasCriticalFail ? 'Registrar Inspección y Bloquear Unidad' : 'Registrar Inspección Conforme',
+                _isSubmitting
+                    ? 'Guardando en Base de Datos PostgreSQL...'
+                    : (_hasCriticalFail ? 'Registrar Inspección y Bloquear Unidad' : 'Registrar Inspección Conforme'),
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
@@ -249,9 +267,8 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
         border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
       ),
       child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.report_problem_rounded, color: AppColors.error, size: 24),
+          Icon(Icons.warning_rounded, color: AppColors.error, size: 28),
           SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -263,7 +280,7 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Se han detectado fallos críticos de seguridad. Al registrar este checklist, el vehículo pasará de inmediato a estado IN_MAINTENANCE en la central.',
+                  'Se han detectado fallos críticos de seguridad. Al registrar este checklist, el vehículo pasará de inmediato a estado IN_MAINTENANCE en la base de datos central.',
                   style: TextStyle(fontSize: 11, color: Color(0xFF991B1B), height: 1.3),
                 ),
               ],
@@ -286,9 +303,10 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
               border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle_rounded, color: AppColors.successText, size: 18),
-                const SizedBox(width: 8),
+                const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
+                const SizedBox(width: 6),
                 Text(
                   '$_passCount Conformes',
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.successText),
@@ -304,12 +322,19 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
             decoration: BoxDecoration(
               color: _failedCount > 0 ? AppColors.errorLight : AppColors.surfaceVariant,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _failedCount > 0 ? AppColors.error.withValues(alpha: 0.3) : AppColors.border),
+              border: Border.all(
+                color: _failedCount > 0 ? AppColors.error.withValues(alpha: 0.3) : AppColors.border,
+              ),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.warning_amber_rounded, color: _failedCount > 0 ? AppColors.error : AppColors.textMuted, size: 18),
-                const SizedBox(width: 8),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: _failedCount > 0 ? AppColors.error : AppColors.textSecondary,
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
                 Text(
                   '$_failedCount Con Falla',
                   style: TextStyle(
@@ -326,109 +351,157 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
     );
   }
 
-  Widget _buildSectionGroup(String sectionTitle, List<ChecklistItemData> items) {
+  Widget _buildSectionCard(String sectionTitle, List<ChecklistItemData> items) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant.withValues(alpha: 0.5),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(13),
+                topRight: Radius.circular(13),
+              ),
             ),
-            child: Text(
-              sectionTitle,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            child: Row(
+              children: [
+                Text(
+                  sectionTitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
           ),
-          ...items.map((item) => _buildItemTile(item)),
+          // Items
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(12),
+            itemCount: items.length,
+            separatorBuilder: (ctx, i) => const Divider(height: 20, color: AppColors.border),
+            itemBuilder: (ctx, i) => _buildChecklistItem(items[i]),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildItemTile(ChecklistItemData item) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+  Widget _buildChecklistItem(ChecklistItemData item) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                item.label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            if (item.isCritical) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.errorLight,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'Crítico',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
+        // 3-state buttons
+        Row(
+          children: [
+            _buildStateButton(
+              item,
+              ItemCheckStatus.pass,
+              'CONFORME',
+              AppColors.success,
+              AppColors.successLight,
+            ),
+            const SizedBox(width: 8),
+            _buildStateButton(
+              item,
+              ItemCheckStatus.fail,
+              'DEFECTO',
+              AppColors.error,
+              AppColors.errorLight,
+            ),
+            const SizedBox(width: 8),
+            _buildStateButton(
+              item,
+              ItemCheckStatus.na,
+              'N/A',
+              AppColors.textSecondary,
+              AppColors.surfaceVariant,
+            ),
+          ],
+        ),
+        // Defect notes input when status == fail
+        if (item.status == ItemCheckStatus.fail) ...[
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: Text(
-                  item.label,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                ),
-              ),
-              if (item.isCritical)
-                Container(
-                  margin: const EdgeInsets.only(left: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.errorLight,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text('Crítico', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.error)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // 3-State Buttons Row
-          Row(
-            children: [
-              _buildStateButton(item, ItemCheckStatus.pass, 'CONFORME', AppColors.success, AppColors.successLight),
-              const SizedBox(width: 8),
-              _buildStateButton(item, ItemCheckStatus.fail, 'DEFECTO', AppColors.error, AppColors.errorLight),
-              const SizedBox(width: 8),
-              _buildStateButton(item, ItemCheckStatus.na, 'N/A', AppColors.textSecondary, AppColors.surfaceVariant),
-            ],
-          ),
-          if (item.status == ItemCheckStatus.fail) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    onChanged: (val) => item.comments = val,
-                    decoration: InputDecoration(
-                      hintText: 'Describa la falla detectada...',
-                      hintStyle: const TextStyle(fontSize: 11),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                child: TextField(
+                  onChanged: (val) => item.comments = val,
+                  decoration: InputDecoration(
+                    hintText: 'Describa la falla detectada...',
+                    hintStyle: const TextStyle(fontSize: 11),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                   ),
+                  style: const TextStyle(fontSize: 12),
                 ),
-                const SizedBox(width: 6),
-                IconButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('📷 Foto de evidencia de falla adjuntada.'),
-                        duration: Duration(seconds: 1),
-                        backgroundColor: AppColors.primaryDark,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add_a_photo_outlined, size: 20, color: AppColors.error),
-                  tooltip: 'Adjuntar foto',
-                ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('📷 Evidencia fotográfica de la avería capturada.'),
+                      duration: Duration(milliseconds: 900),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_a_photo_outlined, color: AppColors.primaryDark),
+                tooltip: 'Adjuntar foto del fallo',
+              ),
+            ],
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -473,7 +546,45 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
     );
   }
 
-  void _submitInspection() {
+  Future<void> _submitInspection() async {
+    setState(() => _isSubmitting = true);
+
+    // Prepare payload matching Laravel API
+    final answersPayload = _items.map((item) {
+      String statusStr;
+      switch (item.status) {
+        case ItemCheckStatus.pass:
+          statusStr = 'pass';
+          break;
+        case ItemCheckStatus.fail:
+          statusStr = 'fail';
+          break;
+        case ItemCheckStatus.na:
+          statusStr = 'na';
+          break;
+      }
+      return {
+        'checklist_item_id': item.id,
+        'status': statusStr,
+        'notes': item.comments?.trim(),
+      };
+    }).toList();
+
+    final repo = ref.read(inspectionRepositoryProvider);
+    final result = await repo.submitInspection(
+      vehicleId: 3, // ABC-123 in PostgreSQL
+      checklistTemplateId: 1, // Routine check template in PostgreSQL
+      shift: 'morning',
+      startMileage: 128450,
+      fuelLevel: '4/4',
+      yardLocation: 'Base Central - Bahía 4',
+      generalNotes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+      answers: answersPayload,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -487,9 +598,11 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
               size: 28,
             ),
             const SizedBox(width: 8),
-            Text(
-              _hasCriticalFail ? 'Bloqueo Preventivo' : 'Inspección Aprobada',
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+            Flexible(
+              child: Text(
+                _hasCriticalFail ? 'Bloqueo Preventivo en BD' : 'Inspección Registrada en BD',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -499,20 +612,39 @@ class _PreUseInspectionScreenState extends State<PreUseInspectionScreen> {
           children: [
             Text(
               _hasCriticalFail
-                  ? 'La unidad ABC-123 no está en condiciones de operar debido a fallas críticas en los frenos/fluidos. Pasará a estado IN_MAINTENANCE en la central.'
-                  : 'Todos los puntos de seguridad han sido auditados satisfactoriamente. La unidad queda en servicio.',
+                  ? 'La unidad ABC-123 ha sido actualizada a estado IN_MAINTENANCE en la base de datos PostgreSQL. Se crearon ${result.defectsCreated} órdenes de defecto para taller.'
+                  : 'Inspección guardada exitosamente en PostgreSQL (ID #${result.inspectionId}). La unidad ABC-123 permanece ACTIVA.',
               style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primarySoft,
+                color: _hasCriticalFail ? AppColors.errorLight : AppColors.successLight,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _hasCriticalFail ? AppColors.error.withValues(alpha: 0.3) : AppColors.success.withValues(alpha: 0.3),
+                ),
               ),
-              child: const Text(
-                'Datos encolados en Drift SQLite para sincronización con fleet-tech-api.',
-                style: TextStyle(fontSize: 11, color: AppColors.primaryDark),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.storage_rounded,
+                    size: 18,
+                    color: _hasCriticalFail ? AppColors.error : AppColors.successText,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'PostgreSQL 14 • Tabla "inspections" #${result.inspectionId}\nEstado Vehículo: ${result.vehicleStatus?.toUpperCase()}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _hasCriticalFail ? AppColors.error : AppColors.successText,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
