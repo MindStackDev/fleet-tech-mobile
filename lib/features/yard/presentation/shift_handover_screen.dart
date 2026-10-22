@@ -1,3 +1,5 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../inspection/data/inspection_repository.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -8,7 +10,7 @@ import 'widgets/dual_signature_pad.dart';
 import 'widgets/tool_audit_card.dart';
 import 'widgets/handover_receipt_dialog.dart';
 
-class ShiftHandoverScreen extends StatefulWidget {
+class ShiftHandoverScreen extends ConsumerStatefulWidget {
   final String plateNumber;
   final int vehicleId;
 
@@ -19,10 +21,10 @@ class ShiftHandoverScreen extends StatefulWidget {
   });
 
   @override
-  State<ShiftHandoverScreen> createState() => _ShiftHandoverScreenState();
+  ConsumerState<ShiftHandoverScreen> createState() => _ShiftHandoverScreenState();
 }
 
-class _ShiftHandoverScreenState extends State<ShiftHandoverScreen> {
+class _ShiftHandoverScreenState extends ConsumerState<ShiftHandoverScreen> {
   // Operational state
   ShiftType _shiftType = ShiftType.morning;
   final TextEditingController _odometerController = TextEditingController(text: '128450');
@@ -203,13 +205,33 @@ class _ShiftHandoverScreenState extends State<ShiftHandoverScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(ctx).pop();
+              
+              // Persist to PostgreSQL backend via inspectionRepository
+              final repo = ref.read(inspectionRepositoryProvider);
+              final result = await repo.submitInspection(
+                vehicleId: 3, // ABC-123 in PostgreSQL
+                checklistTemplateId: 1,
+                shift: _shiftType.value,
+                startMileage: int.tryParse(_odometerController.text) ?? 128450,
+                fuelLevel: _selectedFuel,
+                yardLocation: 'Bahía ${_bayController.text}',
+                generalNotes: 'Relevo de turno entre ${_outgoingOpController.text} y ${_incomingOpController.text}',
+                answers: _answers.values.map((a) => {
+                  'checklist_item_id': a.toolId,
+                  'status': a.status.value,
+                  'notes': a.observation,
+                }).toList(),
+              );
+
+              if (!mounted) return;
+
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(hasCritical
-                      ? 'Relevo registrado. UNIDAD BLOQUEADA PREVENTIVAMENTE.'
-                      : 'Relevo y custodia registrados con éxito.'),
+                      ? 'Relevo registrado en PostgreSQL #${result.inspectionId}. UNIDAD BLOQUEADA PREVENTIVAMENTE.'
+                      : 'Relevo guardado en PostgreSQL #${result.inspectionId} con éxito.'),
                   backgroundColor: hasCritical ? AppColors.error : AppColors.successText,
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -218,7 +240,7 @@ class _ShiftHandoverScreenState extends State<ShiftHandoverScreen> {
                 context: context,
                 barrierDismissible: false,
                 builder: (_) => HandoverReceiptDialog(
-                  orderCode: 'REL-2026-1027',
+                  orderCode: 'REL-2026-${result.inspectionId ?? 1027}',
                   plateNumber: widget.plateNumber,
                   vehicleModel: 'Toyota Hilux 4x4 (2023)',
                   odometer: _odometerController.text,

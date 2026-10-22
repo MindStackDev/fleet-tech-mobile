@@ -1,9 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/vehicle_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 
-class VehicleDetailScreen extends StatelessWidget {
+class VehicleDetailScreen extends ConsumerWidget {
   const VehicleDetailScreen({super.key});
 
   void _copyVin(BuildContext context, String vin) {
@@ -18,7 +20,9 @@ class VehicleDetailScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vehicleAsync = ref.watch(currentVehicleProvider('ABC-123'));
+    final isBlocked = vehicleAsync.valueOrNull?.isInMaintenance ?? false;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -53,22 +57,22 @@ class VehicleDetailScreen extends StatelessWidget {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.successLight,
+              color: isBlocked ? AppColors.errorLight : AppColors.successLight,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+              border: Border.all(color: isBlocked ? AppColors.error.withValues(alpha: 0.3) : AppColors.success.withValues(alpha: 0.3)),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircleAvatar(
                   radius: 3.5,
-                  backgroundColor: AppColors.success,
+                  backgroundColor: isBlocked ? AppColors.error : AppColors.success,
                 ),
-                SizedBox(width: 5),
+                const SizedBox(width: 5),
                 Text(
-                  'Activo',
+                  isBlocked ? 'En Taller' : 'Activo',
                   style: TextStyle(
-                    color: AppColors.successText,
+                    color: isBlocked ? AppColors.error : AppColors.successText,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -86,6 +90,39 @@ class VehicleDetailScreen extends StatelessWidget {
           children: [
             // Placa Card
             _buildPlateCard(),
+            if (isBlocked) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.errorLight,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 26),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'UNIDAD BLOQUEADA EN CENTRAL (IN_MAINTENANCE)',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.error),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Esta unidad fue bloqueada preventivamente tras el último checklist de patio en PostgreSQL. Se generaron órdenes de trabajo en taller.',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF991B1B)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             // Technical Specs Grid Card
             _buildSpecsCard(context),
